@@ -5,23 +5,43 @@ Calculate the projected earthquake magnitudes with the Pisarenko-Sornette
 approach of Extreme Value Theory
 
 * Code
+:PROPERTIES:
+:session:  *R*
+:results: silent
+:exports: code 
+:cache: yes 
+:tangle: seismicity_gev.r
+:END:
+
 ** Data acquisition 
 We will need some libraries, so let us declare these first. Then, we
-read in the data from file. The data fields of interest are
+read in the data from file. The data provided need a little work. We are interested in
 - magnitude
 - UTC
 - lat and long
 - depth
-The ordering of the data most convenient by ascending UTC.
+The column names have to be tidied up a little, and the Date and Time
+fields have to be converted into UTC format for R.  The ordering of
+the data most convenient by ascending UTC.
 
 #+BEGIN_SRC R
   library("data.table")
   library("dplyr")
   library("evd")
+  library("geosphere")
+  library("tidyr")
 
-  events <- read.table("earthquakes.csv", header = T, sep = "\t")
+  events <- read.table("../data/earthquakes.csv", header = TRUE, sep = ",",
+                       stringsAsFactors = FALSE)
+  events <- select(events, -Sydney.Date, -Sydney.Time, -Approximate.location,
+                   -EVENT.ID, -ORIGIN.ID)
+  events <- unite(events, UTC, c(UTC.Date, UTC.Time), sep = " ")
+  events$UTC <- as.POSIXct(events$UTC, tz = "GMT")
+  events <- rename(events, Depth = Depth..km.)
+  events <- arrange(events, UTC)
 #+END_SRC
 
+** Data pre-processing
 Testing sensitivity to magnitude estimate errors. Just perturb the
 actual magnitudes by e(0.0, 0.2)
 #+BEGIN_SRC R
@@ -30,30 +50,48 @@ actual magnitudes by e(0.0, 0.2)
 
 #+END_SRC
 
-De-clustering of the catalogue might improve the Poissonian nature of the
-catalogue data, by eliminating any after-shocks.
-Define two functions used to decide whether an event falls into the
-aftershock window
-first function tests for inclusion in the time window
+De-clustering of the catalogue might improve the Poissonian nature of
+the catalogue data, by eliminating any after-shocks.  Define two
+functions to help decide whether an event falls into the aftershock
+window. First we test if the event falls within the time windown, with
+the Time_Check function, and then we look to see if the event falls
+within the spatial reach of the main events, using the Distance_Check
+function (remember that the distHaversine function returns distance in
+m, not km)
+
+The good approach here is to identify the events that are supposed to
+be main shocks, and calculate both the time and space limits imposed
+by the magnitude of the shock. These limits can then be used to assess
+all the other events.
+
+Proposed set of main-shock magnitudes
+#+BEGIN_SRC R
+  Max_Mag <- 4.5
+  main_events <- filter(events, Magnitude > Max_Mag)
+  main_events <- mutate(main_events,
+                        delta_T = 10^(-0.31 + 0.46 * Magnitude),
+                        delta_D = 10^(-0.85 + 0.46 * Magnitude))
+#+END_SRC
 
 #+BEGIN_SRC R
   Time_Check <- function(index_main,index_test)
     {
     T_1 <- events$UTC[index_main]
     T_2 <- events$UTC[index_test]
-    if (T_2-T_1 < 10^(-0.31+0.46*events$Magnitude[index_main])) Result <- TRUE else Result <- FALSE
+    if (T_2-T_1 < 10^(-0.31+0.46*events$Magnitude[index_main]))
+        Result <- TRUE
+    else Result <- FALSE
     Result
     }
-  # second function tests for inclusion in the space window  
+
   Distance_Check <- function(index_main,index_test)
     {
-     Lat_1 <- events$Latitude[index_main] * pi/180.0
-     Long_1 <- events$Longitude[index_main] * pi/180.0
-     Lat_2 <- events$Latitude[index_test] * pi/180.0   
-     Long_2 <- events$Longitude[index_test] * pi/180.0
+     P1 <- c(events$Longitude[index_main], events$Latitude[index_main])
+     P2 <- c(events$Longitude[index_test], events$Latitude[index_test])
      Threshold <- 10^(-0.85+0.46*events$Magnitude[index_main])
-     Distance <- 6371 * acos(sin(Lat_1)*sin(Lat_2) + cos(Lat_1)*cos(Lat_2)*cos(Long_2-Long_1))
-     if (Distance < Threshold) Result <- TRUE else Result <- FALSE
+     Distance <- distHaversine(P1, P2)/1000
+     if (Distance < Threshold) Result <- TRUE
+     else Result <- FALSE
      Result
     }
 #+END_SRC
@@ -67,10 +105,6 @@ event in the database.
   events$UTC <- events$UTC - events$UTC[1]
 #+END_SRC
 
-Proposed set of main-shock magnitudes
-#+BEGIN_SRC R
-  Max_Mag <- 4.5
-#+END_SRC
 
 Step through all the events: check if the magnitude falls in the main
 shock series, then check the following events to see if these fall in
@@ -81,36 +115,33 @@ the critical time-space window
   while (Index < length(events$UTC)-1)     # Stepping through the data matrix
     {
     Step <- 1                            # Starting the aftershock check sequence
-    while (Index+Step < length(events$UTC) && Time_Check(Index,Index+Step)==TRUE && (events$Magnitude[Index] > events$Magnitude[Index+Step]))
+    while
+    (Index+Step < length(events$UTC) && Time_Check(Index,Index+Step) == TRUE
+        && (events$Magnitude[Index] > events$Magnitude[Index+Step]))
       {
-      if (Distance_Check(Index,Index+Step)==TRUE && events$Magnitude[Index] > Max_Mag) events$Keep[Index+Step] <- FALSE
+          if
+          (Distance_Check(Index,Index+Step) == TRUE
+              && events$Magnitude[Index] > Max_Mag)
+              events$Keep[Index+Step] <- FALSE
       Step <- Step + 1
       }
     Index <- Index + 1
     }
 
   # The de-clustered database of events is the subset of Keep==TRUE
-  events <- subset(events, Keep==TRUE, select = c(UTC,Magnitude,Longitude,Latitude,Depth))
+  events <- filter(events, Keep == TRUE)
 
   # Reset the time values to number of days since the first event in the database
   delta_T_Max <- events$UTC[length(events$UTC)]-events$UTC[1]
   events$UTC <- events$UTC - events$UTC[1]
 #+END_SRC
-       
-# Calculate the Gutenberg-Richter relationship between Magnitude and numbers
-# First, set up the magnitude steps, here between 2.0 and 7.0
 
+Calculate the Gutenberg-Richter relationship between magnitude and
+number of events smaller or equal to the given magnitude
 #+BEGIN_SRC R
-  GR_M_Range <- seq(2.5, 7.0, by=0.1)
-
-  # Set up a dataframe for the results
-  GR <- data.frame(Threshold=GR_M_Range,Number=rep(0, times=length(GR_M_Range)))
-
-  # Calculate the number of events exceeding the defined magnitude range
-  for (i in 1:length(GR_M_Range)) 
-    {
-    GR$Number[i] <- length(subset(events$Magnitude, events$Magnitude > GR_M_Range[i]))
-    }
+  GR <- count(events, Magnitude)
+  GR <- mutate(GR, n = cumsum(n))
+  GR <- mutate(GR, n = max(n) - n + 1)
 #+END_SRC
 
 ** EVD calculations
