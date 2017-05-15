@@ -11,18 +11,20 @@ approach of Extreme Value Theory
 :exports: code 
 :cache: yes 
 :tangle: seismicity_gev.r
-:END:
+:END:      
 
 ** Data acquisition 
 We will need some libraries, so let us declare these first. Then, we
-read in the data from file. The data provided need a little work. We are interested in
+read in the data from file. The data provided need a little work. We
+are interested in
 - magnitude
 - UTC
 - lat and long
 - depth
-The column names have to be tidied up a little, and the Date and Time
-fields have to be converted into UTC format for R.  The ordering of
-the data most convenient by ascending UTC.
+The column names have to be tidied up, and the Date and Time fields
+have to be converted into UTC format for R.  The ordering of the data
+by ascending UTC will be useful later on. Add a logical field, to flag
+if an events might be an aftershock.
 
 #+BEGIN_SRC R
   library("data.table")
@@ -34,112 +36,93 @@ the data most convenient by ascending UTC.
   events <- read.table("../data/earthquakes.csv", header = TRUE, sep = ",",
                        stringsAsFactors = FALSE)
   events <- select(events, -Sydney.Date, -Sydney.Time, -Approximate.location,
-                   -EVENT.ID, -ORIGIN.ID)
+                   -ORIGIN.ID)
   events <- unite(events, UTC, c(UTC.Date, UTC.Time), sep = " ")
   events$UTC <- as.POSIXct(events$UTC, tz = "GMT")
-  events <- rename(events, Depth = Depth..km.)
   events <- arrange(events, UTC)
+
+  events <- rename(events,
+                   Mag = Magnitude,
+                   Long = Longitude,
+                   Lat = Latitude,
+                   Depth = Depth..km.)
+  events <- mutate(events, Aftershock = FALSE)
+
 #+END_SRC
 
 ** Data pre-processing
+Before we calculate the various properties we are interested in, it is
+a good idea to run a few checks and put in place a number of
+opportunities to test any boundary conditions which may or may not be
+fulfilled.
+
 Testing sensitivity to magnitude estimate errors. Just perturb the
 actual magnitudes by e(0.0, 0.2)
 #+BEGIN_SRC R
-  My_perturb <- rnorm(length(events$Magnitude), mean=0.0, sd = 0.2)
-  events$Magnitude <- events$Magnitude + My_perturb
+  My_perturb <- rnorm(length(events$Mag), mean=0.0, sd = 0.2)
+  events$Mag <- events$Mag + My_perturb
 
 #+END_SRC
 
 De-clustering of the catalogue might improve the Poissonian nature of
-the catalogue data, by eliminating any after-shocks.  Define two
-functions to help decide whether an event falls into the aftershock
-window. First we test if the event falls within the time windown, with
-the Time_Check function, and then we look to see if the event falls
-within the spatial reach of the main events, using the Distance_Check
-function (remember that the distHaversine function returns distance in
-m, not km)
+the catalogue data, by eliminating any after-shocks.  
 
-The good approach here is to identify the events that are supposed to
-be main shocks, and calculate both the time and space limits imposed
-by the magnitude of the shock. These limits can then be used to assess
-all the other events.
+We will do this by identifying the events that are deemed to be main
+shocks, and calculating both the time and space limits imposed by the
+magnitude of each of the shocks. 
 
-Proposed set of main-shock magnitudes
+We then check each event in the catalogue against all these limits: if
+it falls within the limits, it gets flagged as an aftershock.
+
+Proposed set of main-shock magnitudes, with the calculated time and
+distance limits imposed by the actual magnitude (values of parameters
+determing the size of the windows are taken from
+\cite{knopoff_al82:b-values})
 #+BEGIN_SRC R
-  Max_Mag <- 4.5
-  main_events <- filter(events, Magnitude > Max_Mag)
-  main_events <- mutate(main_events,
-                        delta_T = 10^(-0.31 + 0.46 * Magnitude),
-                        delta_D = 10^(-0.85 + 0.46 * Magnitude))
+  Max_Mag <- 5.0
+  main_shocks <- filter(events, Mag > Max_Mag)
+  main_events <- mutate(main_shocks,
+                        delta_T = 10^(-0.31 + 0.46 * Mag),
+                        delta_D = 10^(-0.85 + 0.46 * Mag))
 #+END_SRC
-
-#+BEGIN_SRC R
-  Time_Check <- function(index_main,index_test)
-    {
-    T_1 <- events$UTC[index_main]
-    T_2 <- events$UTC[index_test]
-    if (T_2-T_1 < 10^(-0.31+0.46*events$Magnitude[index_main]))
-        Result <- TRUE
-    else Result <- FALSE
-    Result
-    }
-
-  Distance_Check <- function(index_main,index_test)
-    {
-     P1 <- c(events$Longitude[index_main], events$Latitude[index_main])
-     P2 <- c(events$Longitude[index_test], events$Latitude[index_test])
-     Threshold <- 10^(-0.85+0.46*events$Magnitude[index_main])
-     Distance <- distHaversine(P1, P2)/1000
-     if (Distance < Threshold) Result <- TRUE
-     else Result <- FALSE
-     Result
-    }
-#+END_SRC
-
-Add a logical field, to flag if the entry will be removed as an
-aftershock.  Reset the time values to number of days since the first
-event in the database.
-#+BEGIN_SRC R
-  events <- data.frame(events, Keep=rep(T, times = length(events$UTC)))
-  events$UTC <- as.numeric(difftime(events$UTC,events$UTC[1], units="days"))
-  events$UTC <- events$UTC - events$UTC[1]
-#+END_SRC
-
 
 Step through all the events: check if the magnitude falls in the main
 shock series, then check the following events to see if these fall in
-the critical time-space window
+the critical time-space window (remember that the distHaversine
+function returns distance between points (long, lat) in m, not km).
+We shall also take out the main shocks from the events set, and then
+add them again after processing.
 
 #+BEGIN_SRC R
+  events <- anti_join(events, main_shocks, by = "EVENT.ID")
+
   Index <- 1
-  while (Index < length(events$UTC)-1)     # Stepping through the data matrix
+    while (Index < length(events$UTC)-1)
     {
-    Step <- 1                            # Starting the aftershock check sequence
-    while
-    (Index+Step < length(events$UTC) && Time_Check(Index,Index+Step) == TRUE
-        && (events$Magnitude[Index] > events$Magnitude[Index+Step]))
-      {
-          if
-          (Distance_Check(Index,Index+Step) == TRUE
-              && events$Magnitude[Index] > Max_Mag)
-              events$Keep[Index+Step] <- FALSE
-      Step <- Step + 1
+        main_result <- main_events %>%
+            mutate(test_dT = as.numeric(difftime(events$UTC[Index], UTC,
+                                                 unit = "days")),
+                   test_dD = distHaversine(cbind(Long, Lat),
+                                           c(events$Long[Index], events$Lat[Index]))/1000
+                   ) %>%
+            filter(test_dT > 0, test_dT < delta_T, test_dD < delta_D)
+        if (nrow(main_result) > 0) {events$Aftershock[Index] = TRUE}
+        
+      Index <- Index + 1
       }
-    Index <- Index + 1
-    }
 
-  # The de-clustered database of events is the subset of Keep==TRUE
-  events <- filter(events, Keep == TRUE)
+  events <- full_join(events, main_shocks)
+  events <- arrange(events, UTC)
 
-  # Reset the time values to number of days since the first event in the database
-  delta_T_Max <- events$UTC[length(events$UTC)]-events$UTC[1]
-  events$UTC <- events$UTC - events$UTC[1]
+  #  events <- filter(events, Aftershock == FALSE)
+
+
 #+END_SRC
 
 Calculate the Gutenberg-Richter relationship between magnitude and
 number of events smaller or equal to the given magnitude
 #+BEGIN_SRC R
-  GR <- count(events, Magnitude)
+  GR <- count(events, Mag)
   GR <- mutate(GR, n = cumsum(n))
   GR <- mutate(GR, n = max(n) - n + 1)
 #+END_SRC
