@@ -114,77 +114,73 @@ add them again after processing.
   events <- full_join(events, main_shocks)
   events <- arrange(events, UTC)
 
-  #  events <- filter(events, Aftershock == FALSE)
-
-
+  events <- filter(events, Aftershock == FALSE)
 #+END_SRC
 
-Calculate the Gutenberg-Richter relationship between magnitude and
-number of events smaller or equal to the given magnitude
+And finally, we have to set up a column with the number of days since
+the first event in the data set.
+
 #+BEGIN_SRC R
-  GR <- count(events, Mag)
-  GR <- mutate(GR, n = cumsum(n))
-  GR <- mutate(GR, n = max(n) - n + 1)
+  events <- mutate(events,
+                   UTC_d = as.numeric(difftime(UTC,UTC[1], unit = "days")))
 #+END_SRC
 
 ** EVD calculations
 
-First, set the lower magnitude cut-off
-Now define time steps for the Generalised Extreme Value distribution, in days
+First, set the lower magnitude cut-off. We also have to define the
+time steps for the Generalised Extreme Value distribution (in days)
 #+BEGIN_SRC R
   M_Min <- 3.5
   delta_T <- 10
-  Time_Steps <- seq(20, 300, by=delta_T)
+  Time_Steps <- seq(20, 300, by = delta_T)
+  delta_T_Max <- as.numeric(summarise(events, last(UTC_d) - first(UTC_d)))
 #+END_SRC
 
-Set up the number of data shuffles to bootstrap the GEV parameters and
-improve their accuracy (i.e., reduce variability)
+To improve the acuracy of the results, a bootstrapping approach is
+highly effective. The idea behind the bootstap approach is that
+shuffling the magnitudes around amounts to a resampling of the
+population of the events, whilst maintaining the distribution in time.
+Set up the number of data shuffles to bootstrap the GEV parameter
+calculations.
 #+BEGIN_SRC R
   Bootstrap_Total <- 100
   shuffle_events <- events
 #+END_SRC
  
 The fitted parameters go into an 3-d array
+
+We need to step through the entire events dataset in contiguous blocks
+of size Time_Steps[i], and determine the maximum magnitude in each of
+the intervals. A convenient way of doing this is by creating
+additional columns, containing the blocknumber (in effect the modulus
+of the day number of the event to the time step size). These numbers
+can then be used as groups, so that dplyr grouping can be brought into
+play. 
+#+BEGIN_SRC R
+  shuffle_events <- shuffle_events %>%
+      mutate(block = UTC_d %/% Time_Step)
+#+END_SRC
+
+Calculate the MLE of the GEV distribution and store the results The
+order is: T, loc, scale, shape, error_loc, error_scale, error_shape
+
 #+BEGIN_SRC R
   GEV_Parameters <- array(0, c(length(Time_Steps),4,Bootstrap_Total))
 
-  for (Re_runs in 1:Bootstrap_Total)
-    {# The idea behind the bootstap approach is that shuffling the magnitudes
-    # around amounts to a resampling of the population of the events, whilst
-    # maintaining the distribution in time
-    shuffle_events$Magnitude <- sample(events$Magnitude)
-    # We need to step through the entire events dataset in contiguous blocks
-    # of size Time_Steps[i], and determine the maximum magnitude in each of
-    # the intervals.
+  for (Re_runs in 1:Bootstrap_Total){
+          shuffle_events$Mag <- sample(events$Mag)
+          for (i in 1:length(Time_Steps)){
+              shuffle_events <- shuffle_events %>%
+                  mutate(block = UTC_d %/% Time_Steps[i])
+              Max_Mags <- shuffle_events %>%
+                  group_by(block) %>%
+                  summarize(value = max(Mag))
+              GEV_Fit <- fgev(Max_Mags$value,std.err=F)
+              GEV_Parameters[i, ,Re_runs] <-
+                  c(Time_Steps[i],fitted.values(GEV_Fit))
+          }
+  }
 
-    for (i in 1:length(Time_Steps))
-      {# Looping over the Time Intervals
-      # Determine the contents of the successive time bins through the hist function:
-      # use the number in each bin (and accumulate) to find the position of the data
-      # entries in the events matrix
-      my_breaks <- seq(0,delta_T_Max+Time_Steps[i],by=Time_Steps[i])
-      Time_Hist <- hist(shuffle_events$UTC,breaks=my_breaks,plot=F)
-    
-      # The numbers in each bin are stored in Time_Hist$counts and can be used now
-      # to calculate the maximum magnitude encountered in each of the time bins
-      Bin_low <- 0
-      Bin_high <- 0
-      Bin_Max_Magnitudes <- rep(0, times=length(Time_Hist$counts))
-    
-      for (Bins in 1:length(Time_Hist$counts))
-        {
-        Bin_high <- Bin_low + Time_Hist$counts[Bins]
-        Bin_Max_Magnitudes[Bins] <- max(shuffle_events$Magnitude[Bin_low:Bin_high])
-        if (Bin_Max_Magnitudes[Bins] < M_Min) Bin_Max_Magnitudes[Bins] <- NA
-        Bin_low <- Bin_high
-        }
-
-      # Calculate the MLE of the GEV distribution and store the results
-      # The order is: T, loc, scale, shape, error_loc, error_scale, error_shape
-      GEV_Fit <- fgev(Bin_Max_Magnitudes,std.err=F)
-      GEV_Parameters[i, ,Re_runs] <- c(Time_Steps[i],fitted.values(GEV_Fit))
-      }# End of Time Interval Looping  
-    }
 #+END_SRC
 
 Present the results by performing a statistical summary of the
@@ -223,25 +219,34 @@ time in the future
 
 Let's test how well the reduced data set fulfills the Poisson Process
 #+BEGIN_SRC R
-  Test_Data <- subset(events, events$Magnitude > M_Min, select=UTC)
-  Test_Data$UTC  <- Test_Data$UTC - Test_Data$UTC[1]
-  NOE <- length(Test_Data$UTC)
-  TL <- Test_Data$UTC[NOE]
+  Test_Data <- subset(events, events$Mag > M_Min, select=UTC_d)
+  Test_Data$UTC  <- Test_Data$UTC_d - Test_Data$UTC_d[1]
+  NOE <- length(Test_Data$UTC_d)
+  TL <- Test_Data$UTC_d[NOE]
   # Generate the equivalent Poissonian data set
   Poisson_Data <- seq(1, TL, by=TL/NOE)
   #  and carry out the Kolmogorov-Smirnov test
-  Test_Result <- ks.test(events$UTC,Poisson_Data)
+  Test_Result <- ks.test(events$UTC_d,Poisson_Data)
 #+END_SRC
+
+Calculate the Gutenberg-Richter relationship between magnitude and
+number of events smaller or equal to the given magnitude
+#+BEGIN_SRC R
+  GR <- count(events, Mag)
+  GR <- mutate(GR, n = cumsum(n))
+  GR <- mutate(GR, n = max(n) - n + 1)
+#+END_SRC
+
 
 Make the actual plots
 #+BEGIN_SRC R
-  pdf(file="earthquakes_gev.pdf",paper="a4",width=0,height=0,pointsize=10)
+  pdf(file="../output/earthquakes_gev.pdf",paper="a4",width=0,height=0,pointsize=10)
   op <- par(mfrow = c(3,2))
   plot(GR,log="y",main="Gutenberg-Richter Plot");grid(lty=2,col=5)
   abline(v=M_Min,col=2)
-  My_List <- subset(events, Magnitude > M_Min, select = c(UTC,Magnitude))
-  plot(My_List$UTC/My_List$UTC[length(My_List$UTC)],type="l",xlab="Event Number",ylab="Normalised Occurrence Time",main="Poisson Fit");grid(lty=2,col=5)
-  abline(0,1/length(My_List$UTC),col=4)
+  My_List <- subset(events, Mag > M_Min, select = c(UTC_d,Mag))
+  plot(My_List$UTC_d/My_List$UTC_d[length(My_List$UTC_d)],type="l",xlab="Event Number",ylab="Normalised Occurrence Time",main="Poisson Fit");grid(lty=2,col=5)
+  abline(0,1/length(My_List$UTC_d),col=4)
   text(NOE/5,0.8,"p-value:")
   text(NOE/5,0.7,round(Test_Result$p.value,5))
   matplot(GEV_Results[,1],GEV_Results[,8:10],type="l",lty=1,col=c(1,2,1),main="GEV Parameter Estimation",xlab="T Window (days)", ylab="Shape Parameter");grid(lty=2,col=5)
