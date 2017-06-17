@@ -238,7 +238,7 @@ if an events might be an aftershock.
                    Lat = Latitude,
                    Depth = Depth..km.)
   events <- mutate(events, Aftershock = FALSE)
-  head(events)
+
 #+END_SRC
 
 ** Magnitudes and Timing
@@ -259,18 +259,19 @@ First, let us make a simple plot of the data
 
 #+END_SRC
 
+#+RESULTS[c9b582df1c2432202c50e929edd6fba7e1e282d4]:
+[[file:../output/time_mag.pdf]]
+
 The plot shows that the database is not uniform: far fewer events have
 been recorded in earlier years.
 
-
 *** Catalogue Magnitude
-
 \citeNP{sagar_leonard07:mapping} discussed the magnitude determination
 and the way this has changed over the years. They illustrated these
 changes with a figure of the pre- and post-1992 Western Australian
 earthquake magnitude Cumulative Density graph, including an equivalent
 graph with the South Australian earthquakes.  Let us check if this
-discrepancy is indeed the case with the current data file from NW
+discrepancy is still the case with the current data file from NW
 Australia.  
 
 We can split the events into pre- and post-1992 groups, plot their
@@ -279,19 +280,19 @@ a systematic difference of about 0.5 magnitudes.
 
 #+BEGIN_SRC R :file ../output/mag_issues.pdf
   GR_pre <- events %>%
-      filter(year(UTC) < 1993) %>%
+      filter(year(UTC) < 1992) %>%
       count(Mag) %>%
       mutate(n = cumsum(n)) %>%
       mutate(n = max(n) - n + 1)
 
   GR_post <- events %>%
-      filter(year(UTC) > 1992) %>%
+      filter(year(UTC) > 1991) %>%
       count(Mag) %>%
       mutate(n = cumsum(n)) %>%
       mutate(n = max(n) - n + 1)
 
   GR_pre_corr<- events %>%
-      filter(year(UTC) < 1993) %>%
+      filter(year(UTC) < 1992) %>%
       mutate(Mag = Mag - 0.5) %>%
       count(Mag) %>%
       mutate(n = cumsum(n)) %>%
@@ -304,8 +305,16 @@ a systematic difference of about 0.5 magnitudes.
   grid()
 #+END_SRC
 
+#+RESULTS[5fe29b5c7157ae7b39766f3d5e882603eed4c25b]:
+[[file:../output/mag_issues.pdf]]
+
 We therefore change the magnitude values of all pre-1992 events
 accordingly.
+
+#+BEGIN_SRC R
+  events$Mag[(year(events$UTC) < 1992)] <-
+      events$Mag[(year(events$UTC) < 1992)]-0.5
+#+END_SRC
 
 A more informative, quantitative way of showing any such changes is
 through a cumulative density plot
@@ -321,6 +330,9 @@ through a cumulative density plot
   grid()
 
 #+END_SRC
+
+#+RESULTS[4b89c80ed3c23bf5019cb02bfb538efcb67a4dae]:
+[[file:../output/ecdf.pdf]]
 
 This graph shows that the events before 1979 are much sparser, and
 hence will interfere significantly with any statistical
@@ -357,6 +369,9 @@ this restriction with a cumulative distribution plot.
 
 #+END_SRC
 
+#+RESULTS[78afea68aad67fcb8a8ed7192b5ab4e070dc3a51]:
+[[file:../output/ecdf_restricted.pdf]]
+
 We can verify to what extent this restricted data set is consistent
 with a Poisson Process and use the Kolmogorov-Smirnov test.
 #+BEGIN_SRC R
@@ -367,6 +382,17 @@ with a Poisson Process and use the Kolmogorov-Smirnov test.
   KS_Result
 
 #+END_SRC
+
+#+RESULTS[31891a07da47d8ed6d413d80bda84f54dce00385]:
+: Warning message:
+: In ks.test(events$UTC_d, Poisson_Data) :
+:   p-value will be approximate in the presence of ties
+: 
+: 	Two-sample Kolmogorov-Smirnov test
+: 
+: data:  events$UTC_d and Poisson_Data
+: D = 0.057026, p-value = 0.4017
+: alternative hypothesis: two-sided
 
 ** Sensitivity to data error
 We may gain some idea of the sensitivity of the results to magnitude
@@ -402,6 +428,8 @@ parameters used to determine the size of the windows are taken from
 
 #+END_SRC
 
+#+RESULTS[7dd7ad7aa4b4a08f684df37c229a77696a4cf4dc]:
+
 Step through all the events: check if the magnitude falls in the main
 shock series, then check the following events to see if these fall in
 the critical time-space window (remember that the distHaversine
@@ -431,8 +459,10 @@ from the events set, and then add them again after processing.
   events <- arrange(events, UTC)
 
   events <- filter(events, Aftershock == FALSE)
-  head(events)
+
 #+END_SRC
+
+#+RESULTS[966e3f08614a7f70a13e6fbb84e07edd6d209a47]:
 
 ** EVD calculations
 
@@ -445,6 +475,8 @@ time steps for the Generalised Extreme Value distribution (in days)
   delta_T_Max <- last(events$UTC_d) - first(events$UTC_d)
 
 #+END_SRC
+
+#+RESULTS[dc5844e1c70cff3605a61cf572e2dd012f543978]:
 
 To improve the acuracy of the results, a bootstrapping approach is
 highly effective. The idea behind the bootstap approach is that
@@ -488,6 +520,8 @@ order is: T, loc, scale, shape, error_loc, error_scale, error_shape
 
 #+END_SRC
 
+#+RESULTS[19c7aaa71371b8140a3e1a6a92181e930a1527ac]:
+
 Present the results by performing a statistical summary of the
 parameter estimates
 #+BEGIN_SRC R
@@ -509,6 +543,8 @@ parameter estimates
   Location <- GEV_Results[,3]
 #+END_SRC
 
+#+RESULTS[506c1cc872509c3e488e33f253e6f325f37a4697]:
+
 Now we can calculate estimates of maximum magnitudes for arbitrary
 time in the future. Here we look at 1000, 2000, 3000, 4000 and 5000
 years ahead
@@ -525,6 +561,8 @@ years ahead
     }
 #+END_SRC
 
+#+RESULTS[1035e11f5b32ba5657ef0fc3a00ad62fdad1f767]:
+
 ** Plot results
 
 Calculate the Gutenberg-Richter relationship between magnitude and
@@ -539,6 +577,8 @@ number of events smaller or equal to the given magnitude
   #GR <- mutate(GR, n = cumsum(n))
   #GR <- mutate(GR, n = max(n) - n + 1)
 #+END_SRC
+
+#+RESULTS[b72396fbfa13050372cb7224aea688b9cc99975a]:
 
 Make the actual plots
 #+BEGIN_SRC R :file ../output/earthquakes_gev.pdf
@@ -597,6 +637,9 @@ Make the actual plots
 
   par(op)
 #+END_SRC
+
+#+RESULTS[88eb074649394b7da4f28848661c880faaa29200]:
+[[file:../output/earthquakes_gev.pdf]]
 
 \bibliography{biblio_seismology}
 \bibliographystyle{chicago}

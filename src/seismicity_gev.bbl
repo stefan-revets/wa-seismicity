@@ -1,0 +1,207 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{Bak, Christensen, Danon, and Scanlon}{Bak
+  et~al.}{2002}]{bak_al02:unified}
+Bak, P., K.~Christensen, L.~Danon, and T.~Scanlon (2002).
+\newblock Unified scaling law for earthquakes.
+\newblock {\em Physical Review Letters\/}~{\em 88\/}(178501).
+
+\bibitem[\protect\citeauthoryear{Bender and Perkins}{Bender and
+  Perkins}{1993}]{bender_perkins93:_treatment}
+Bender, B.~K. and D.~M. Perkins (1993).
+\newblock Treatment of parameter uncertainty and variability for a single
+  seismic hazard map.
+\newblock {\em Earthquake Spectra\/}~{\em 9\/}(2), 165--195.
+
+\bibitem[\protect\citeauthoryear{Consentino, Ficara, and Luzio}{Consentino
+  et~al.}{1977}]{consentino_al77:truncated}
+Consentino, P., V.~Ficara, and D.~Luzio (1977).
+\newblock Truncated exponential frequency-magnitude relationships in the
+  earthquake statistics.
+\newblock {\em Bulletin Seismological Society of America\/}~{\em 67},
+  1615--1623.
+
+\bibitem[\protect\citeauthoryear{Cornell}{Cornell}{1994}]{cornell94:statistical}
+Cornell, C.~A. (1994).
+\newblock Statistical analysis of maximum magnitudes.
+\newblock In J.~Schneider (Ed.), {\em The earthquakes of stable continental
+  regions}, Volume~1, pp.\  5/1--27. Palo Alto, Ca: Electrical Power Research
+  Institute.
+
+\bibitem[\protect\citeauthoryear{Corral}{Corral}{2005}]{corral05:renormalisation}
+Corral, A. (2005).
+\newblock Renormalization-group transformations and correlations of seismicity.
+\newblock {\em Physical Review Letters\/}~{\em 95\/}(028501).
+
+\bibitem[\protect\citeauthoryear{Corral}{Corral}{2006}]{corral06:dependence}
+Corral, A. (2006).
+\newblock Dependence of earthquake recurrence times and independence of
+  magnitudes on seismicity history.
+\newblock {\em Tectonophysics\/}~{\em 424}, 177--193.
+
+\bibitem[\protect\citeauthoryear{Corral}{Corral}{2009}]{corral09:statistical}
+Corral, A. (2009).
+\newblock Statistical tests for scaling in the inter-event times of earthquakes
+  in {California}.
+\newblock {\em International Journal of Modern Physics B\/}~{\em 23\/}(28--29),
+  5570--5582.
+
+\bibitem[\protect\citeauthoryear{Dargahi-Noubary}{Dargahi-Noubary}{1983}]{dargahi-noubary83:procedure}
+Dargahi-Noubary, G.~R. (1983).
+\newblock A procedure for estimation of the upper bound for earthquake
+  magnitudes.
+\newblock {\em Physics of Earth and Planetary Interiors\/}~{\em 33}, 91--93.
+
+\bibitem[\protect\citeauthoryear{Embrechts, Kluppelberg, and Mikosh}{Embrechts
+  et~al.}{1997}]{embrechts_al97:extremal}
+Embrechts, P., C.~P. Kluppelberg, and T.~Mikosh (1997).
+\newblock {\em Modelling extremal events}.
+\newblock Berlin: Springer Verlag.
+
+\bibitem[\protect\citeauthoryear{Gutenberg and Richter}{Gutenberg and
+  Richter}{1944}]{gutenberg-richter44:frequency}
+Gutenberg, B. and C.~F. Richter (1944).
+\newblock Frequency of earthquakes in {California}.
+\newblock {\em Bulletin Seismological Society of America\/}~{\em 34}, 185--188.
+
+\bibitem[\protect\citeauthoryear{Kagan}{Kagan}{1993}]{kagan93:statistics}
+Kagan, Y.~Y. (1993).
+\newblock Statistics of characteristic earthquakes.
+\newblock {\em Bulletin Seismological Society of America\/}~{\em 83}, 7--24.
+
+\bibitem[\protect\citeauthoryear{Kagan}{Kagan}{1997}]{kagan97:seismic}
+Kagan, Y.~Y. (1997).
+\newblock Seismic moment-frequency relation for shallow earthquakes: regional
+  comparison.
+\newblock {\em Journal of Geophysical Research\/}~{\em 102}, 2835--2852.
+
+\bibitem[\protect\citeauthoryear{Kagan and Knopoff}{Kagan and
+  Knopoff}{1981}]{kagan_knopoff81:stochastic}
+Kagan, Y.~Y. and L.~Knopoff (1981).
+\newblock Stochastic synthesis of earthquake catalogs.
+\newblock {\em Journal of Geophysical Research\/}~{\em 86}, 2853--2862.
+
+\bibitem[\protect\citeauthoryear{Kagan and Schoenberg}{Kagan and
+  Schoenberg}{2001}]{kagan_schoenberg01:estimation}
+Kagan, Y.~Y. and F.~Schoenberg (2001).
+\newblock Estimation of the upper cutoff parameter for the tapered {Pareto}
+  distribution.
+\newblock {\em Journal of Applied Probability\/}~{\em 38A}, 901--918.
+
+\bibitem[\protect\citeauthoryear{Kaklamanos, Boore, Thompson, and
+  Campbell}{Kaklamanos et~al.}{2010}]{kaklamanos_al10:implementation}
+Kaklamanos, J., D.~M. Boore, E.~M. Thompson, and K.~W. Campbell (2010).
+\newblock Implementation of the next generation attenuation (nga) ground-motion
+  prediction equations in {Fortran} and {R}.
+\newblock Open-File Report 2010-1296, U.S. Geological Survey.
+
+\bibitem[\protect\citeauthoryear{Kijiko and Graham}{Kijiko and
+  Graham}{1998}]{kijiko_graham98:parametric}
+Kijiko, A. and G.~Graham (1998).
+\newblock Parametric-historic procedure for probabilistic seismic hazard
+  analysis. {Part} 1: {Estimation} of maximum regional magnitude
+  $\mathrm{M}_\mathrm{max}$.
+\newblock {\em Pure and Applied Geophysics\/}~{\em 152}, 413--442.
+
+\bibitem[\protect\citeauthoryear{Knopoff, Kagan, and Knopoff}{Knopoff
+  et~al.}{1982}]{knopoff_al82:b-values}
+Knopoff, L., Y.~Kagan, and R.~Knopoff (1982).
+\newblock b-values for foreshocks and aftershocks in real and simulated
+  earthquake sequences.
+\newblock {\em Bulletin Seismological Society of America\/}~{\em 72\/}(5),
+  1663--1675.
+
+\bibitem[\protect\citeauthoryear{Lam and Wilson}{Lam and
+  Wilson}{2008}]{lam_wilson08:new}
+Lam, N. T.~K. and J.~L. Wilson (2008).
+\newblock The new response spectrum model for {Australia}.
+\newblock {\em Electronical Journal of Structural Engineering\/}~{\em Special
+  Issue\/}(1), 6--24.
+
+\bibitem[\protect\citeauthoryear{Leonard}{Leonard}{2008}]{leonard08:hundred}
+Leonard, M. (2008).
+\newblock One hundred years of earthquake recording in {Australia}.
+\newblock {\em Bulletin Seismological Society of America\/}~{\em 98\/}(3),
+  1458--1470.
+
+\bibitem[\protect\citeauthoryear{Leonard, Robinson, Allen, Schneider, Clark,
+  Dhu, and Burbidge}{Leonard et~al.}{2007}]{leonard-al07:model}
+Leonard, M., D.~Robinson, T.~Allen, J.~Schneider, D.~Clark, T.~Dhu, and
+  D.~Burbidge (2007).
+\newblock Towards a better model of earthquake hazard in {Australia}.
+\newblock In S.~Stein and S.~Mazzotti (Eds.), {\em Contintental intraplate
+  earthquakes: Science, hazard, and policy issues}, Volume 425 of {\em
+  Geological Society of America Special Papers}, pp.\  263--283.
+
+\bibitem[\protect\citeauthoryear{Main, Irving, Musson, and Reading}{Main
+  et~al.}{1999}]{main_al99:constraints}
+Main, Y., D.~Irving, R.~Musson, and A.~Reading (1999).
+\newblock Constraints on frequency-magnitude relation and maximum magnitudes in
+  the {UK} from observed seismicity and glacio-isostatic recovery rates.
+\newblock {\em Geophysical Journal International\/}~{\em 137}, 535--550.
+
+\bibitem[\protect\citeauthoryear{Ogata}{Ogata}{1988}]{ogata88:statistical}
+Ogata, Y. (1988).
+\newblock Statistical models for earthquake occurrences and residual analysis
+  for point processes.
+\newblock {\em Journal of the American Statistical Association\/}~{\em
+  83\/}(401), 9--27.
+
+\bibitem[\protect\citeauthoryear{Pisarenko, Sornette, Sornette, and
+  Rodkin}{Pisarenko et~al.}{2008a}]{pisarenko_etal08:characterisation}
+Pisarenko, V.~F., A.~Sornette, D.~Sornette, and M.~V. Rodkin (2008a).
+\newblock Characterisation of the tail of the distribution of earthquake
+  magnitudes by combining the {GEV} and {GPD} descriptions of extreme value
+  theory.
+\newblock {\em ArXiv e-prints\/}~(eprint 0805.1635).
+
+\bibitem[\protect\citeauthoryear{Pisarenko, Sornette, Sornette, and
+  Rodkin}{Pisarenko et~al.}{2008b}]{pisarenko_etal08:new_approach}
+Pisarenko, V.~F., A.~Sornette, D.~Sornette, and M.~V. Rodkin (2008b).
+\newblock New approach to the characterisation of {$\mathrm{M}_\mathrm{max}$}
+  and of the tail of the distribution of earthquake magnitudes.
+\newblock {\em Pure and Applied Geophysics\/}~{\em 165}, 847--888.
+
+\bibitem[\protect\citeauthoryear{Pisarenko and Sornette}{Pisarenko and
+  Sornette}{2004}]{pisarenko_sornette04:rigorous}
+Pisarenko, V.~F. and D.~Sornette (2004).
+\newblock Rigorous statistical detection and characterisation of a deviation
+  from the {Gutenberg-Richter} distribution above magnitude 8 in subduction
+  zones.
+\newblock {\em Pure and Applied Geophysics\/}~{\em 161}, 839--864.
+
+\bibitem[\protect\citeauthoryear{Sagar and Leonard}{Sagar and
+  Leonard}{2007}]{sagar_leonard07:mapping}
+Sagar, S. and M.~Leonard (2007).
+\newblock Mapping the magnitude of completeness of the {Australian Earthquake
+  Catalogue}.
+\newblock In {\em Proceedings Australian Earthquake Engineering Society
+  Conference}, Number~46.
+
+\bibitem[\protect\citeauthoryear{Saichev and Sornette}{Saichev and
+  Sornette}{2006}]{saichev_sornette06:universal}
+Saichev, A. and D.~Sornette (2006).
+\newblock ``{Universal}'' distribution of inter-earthquake times explained.
+\newblock {\em Physical Review Letters\/}~{\em 97\/}(078501).
+
+\bibitem[\protect\citeauthoryear{Saichev and Sornette}{Saichev and
+  Sornette}{2007}]{saichev_sornette07:theory}
+Saichev, A. and D.~Sornette (2007).
+\newblock Theory of earthquake recurrence times.
+\newblock {\em Journal of Geophysical Research\/}~{\em 112\/}(B04313).
+
+\bibitem[\protect\citeauthoryear{Stein}{Stein}{2007}]{stein07:approaches}
+Stein, S. (2007).
+\newblock Approaches to continental intraplate earthquake issues.
+\newblock In S.~Stein and S.~Mazzotti (Eds.), {\em Contintental intraplate
+  earthquakes: Science, hazard, and policy issues}, Volume 425 of {\em
+  Geological Society of America Special Paper}, pp.\  1--16.
+
+\bibitem[\protect\citeauthoryear{Vere-Jones, Robinson, and Yang}{Vere-Jones
+  et~al.}{2001}]{vere-jones_etal01:remarks}
+Vere-Jones, D., R.~Robinson, and W.~Z. Yang (2001).
+\newblock Remarks on the accelerated moment release model: problems of model
+  formulation, simulation and estimation.
+\newblock {\em Geophysical Journal International\/}~{\em 144}, 517--531.
+
+\end{thebibliography}
