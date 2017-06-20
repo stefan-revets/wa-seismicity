@@ -39,8 +39,9 @@ encountered with the value of magnitude as recorded over the years,
 and in particular changes to the scales and the way in which these
 changes have been applied.  A subset of this catalogue was defined to
 include events which have occurred in an area encompassing the
-Northwest Shelf (16\degree--23\degree S, 112\degree--124\degree E;
-see Figure 1). The magnitudes have been corrected as discussed below.
+Northwest Shelf (16\degree--23\degree S, 112\degree--124\degree E). 
+#+CAPTION: NW Shelf Earthquakes between 1929 and 2017
+file:../doc/nws-events.pdf
 
 * Statistics of Magnitude
 One of the important regularities found to govern the complex
@@ -77,7 +78,6 @@ the more appropriate, statistically sound methods from the study of
 extremal events (\cite{embrechts_al97:extremal}).
 
 ** ``Corner'' magnitude
-
 \citeNP{kagan97:seismic,kagan_schoenberg01:estimation} and
 \citeNP{vere-jones_etal01:remarks} multiplied the power law distribution
 of the seismic moments (which corresponds to the Gutenberg-Richter
@@ -88,7 +88,6 @@ magnitude distribution. The effect is a ``soft'' truncation of the
 Gutenberg-Richter law.
 
 ** Maximum magnitude
-
 The proposal to set a maximum possible earthquake size $M_\mathrm{max}$, a
 hard truncation of the Gutenberg-Richter law
 \cite{consentino_al77:truncated,dargahi-noubary83:procedure,main_al99:constraints}
@@ -110,7 +109,6 @@ undesirable features
 \end{enumerate}
 
 ** Extreme Value Theory
-
 Extreme value theory provides the theory to handle extremes of random
 phenomena. In contrast to basic statistics, it provides the necessary
 tools to deal with statistical distribution issues such as skewness,
@@ -152,7 +150,6 @@ In practice, the parameters of the GEV distribution can be estimated
 from data through maximum likelihood calculations. 
 
 * Statistics of Recurrence Rates
-
 The analysis and calculation of recurrence rates or waiting times of
 seismic events is beset with difficulties equivalent to those
 encountered in the study of magnitude distribution. It is clear that
@@ -274,9 +271,9 @@ graph with the South Australian earthquakes.  Let us check if this
 discrepancy is still the case with the current data file from NW
 Australia.  
 
-We can split the events into pre- and post-1992 groups, plot their
-Gutenberg-Richter relation separately. As we can see, there is indeed
-a systematic difference of about 0.5 magnitudes. 
+When we split the events into pre- and post-1992 groups, and plot
+their Gutenberg-Richter relation separately, there appears to be a
+systematic difference between the subsets.
 
 #+BEGIN_SRC R :file ../output/mag_issues.pdf
   GR_pre <- events %>%
@@ -291,7 +288,7 @@ a systematic difference of about 0.5 magnitudes.
       mutate(n = cumsum(n)) %>%
       mutate(n = max(n) - n + 1)
 
-  GR_pre_corr<- events %>%
+  GR_corr<- events %>%
       filter(year(UTC) < 1992) %>%
       mutate(Mag = Mag - 0.5) %>%
       count(Mag) %>%
@@ -301,22 +298,28 @@ a systematic difference of about 0.5 magnitudes.
   plot(GR_pre, log = "y", pch = 19,
        main = "Gutenberg-Richter relation")
   points(GR_post)
-  points(GR_pre_corr, col = "green")
+  points(GR_corr, col = "green")
   grid()
+
+  legend(2, 5,
+         legend = c("pre 1992","post 1992","pre 1992 corrected"),
+         pch = c(19,21,21),
+         col = c("black","black","green"))
 #+END_SRC
 
-#+RESULTS[5fe29b5c7157ae7b39766f3d5e882603eed4c25b]:
+#+RESULTS[2d191836f542008234405e5cb2ce109fd2ee71a9]:
 [[file:../output/mag_issues.pdf]]
 
-We therefore change the magnitude values of all pre-1992 events
-accordingly.
-
+We can  change the magnitude values of all pre-1992 events.
 #+BEGIN_SRC R
   events$Mag[(year(events$UTC) < 1992)] <-
-      events$Mag[(year(events$UTC) < 1992)]-0.5
+      events$Mag[(year(events$UTC) < 1992)] - 0.5
 #+END_SRC
 
-A more informative, quantitative way of showing any such changes is
+
+*** Stationary, Poissonian, process
+Turning our attention now to the timing of events, we can show the
+changes hinted at earlier in a more informative, quantitative way
 through a cumulative density plot
 #+BEGIN_SRC R :file ../output/ecdf.pdf
   events <- mutate(events,
@@ -331,29 +334,20 @@ through a cumulative density plot
 
 #+END_SRC
 
-#+RESULTS[4b89c80ed3c23bf5019cb02bfb538efcb67a4dae]:
-[[file:../output/ecdf.pdf]]
-
-This graph shows that the events before 1979 are much sparser, and
-hence will interfere significantly with any statistical
+The statistical techniques applied in this study assume a stationary
+Poisson process. This graph shows that the events before 1979 are much
+sparser, and hence will interfere significantly with any statistical
 calculations. A careful look also reveals that another change takes
 place around 2002, when once again fewer events make up the database.
 
-*** Stationary, Poissonian, process
-
-The statistical techniques applied in this study assume a
-stationary Poisson process. A plot of all events in the catalogue
-against time shows immediately that the process is not
-stationary (see Figure 3). A stationary period appears to be
-present between May 1979 and November 2002 (for a total of 485
-events): a plot of events against time yields the expected, and
-required, linear relation (see Figure 4).
-
-Let us therefore restrict our data and exclude all events before 1979
-and after 2002. While we do this, let us take the opportunity of
-adding a column with a time line, as the number of days elapsed since
-the first event in the (filtered) database. Show also the result of
-this restriction with a cumulative distribution plot.
+A stationary period appears to be present between May 1979 and
+November 2002 (for a total of 485 events): a plot of events against
+time yields the expected, and required, linear relation.  Let us
+therefore restrict our data and exclude all events before 1979 and
+after 2002. While we do this, let us take the opportunity of adding a
+column with a time line, as the number of days elapsed since the first
+event in the (filtered) database. Show also the result of this
+restriction with a cumulative distribution plot.
 
 #+BEGIN_SRC R :file ../output/ecdf_restricted.pdf
   events <- events %>%
@@ -369,9 +363,6 @@ this restriction with a cumulative distribution plot.
 
 #+END_SRC
 
-#+RESULTS[78afea68aad67fcb8a8ed7192b5ab4e070dc3a51]:
-[[file:../output/ecdf_restricted.pdf]]
-
 We can verify to what extent this restricted data set is consistent
 with a Poisson Process and use the Kolmogorov-Smirnov test.
 #+BEGIN_SRC R
@@ -383,21 +374,11 @@ with a Poisson Process and use the Kolmogorov-Smirnov test.
 
 #+END_SRC
 
-#+RESULTS[31891a07da47d8ed6d413d80bda84f54dce00385]:
-: Warning message:
-: In ks.test(events$UTC_d, Poisson_Data) :
-:   p-value will be approximate in the presence of ties
-: 
-: 	Two-sample Kolmogorov-Smirnov test
-: 
-: data:  events$UTC_d and Poisson_Data
-: D = 0.057026, p-value = 0.4017
-: alternative hypothesis: two-sided
-
 ** Sensitivity to data error
 We may gain some idea of the sensitivity of the results to magnitude
 estimate errors. The simplest way of doing this, is by perturbing the
-actual magnitudes by e(0.0, 0.25) and re-running the entire analysis.
+actual magnitudes by e(0.0, 0.25) with these two lines of code and
+re-running the entire analysis.
 #+BEGIN_SRC R :tangle no
 #  My_perturb <- rnorm(length(events$Mag), mean=0.0, sd = 0.25)
 #  events$Mag <- events$Mag + My_perturb
@@ -427,8 +408,6 @@ parameters used to determine the size of the windows are taken from
                         delta_D = 10^(-0.85 + 0.46 * Mag))
 
 #+END_SRC
-
-#+RESULTS[7dd7ad7aa4b4a08f684df37c229a77696a4cf4dc]:
 
 Step through all the events: check if the magnitude falls in the main
 shock series, then check the following events to see if these fall in
@@ -462,10 +441,8 @@ from the events set, and then add them again after processing.
 
 #+END_SRC
 
-#+RESULTS[966e3f08614a7f70a13e6fbb84e07edd6d209a47]:
 
 ** EVD calculations
-
 First, set the lower magnitude cut-off. We also have to define the
 time steps for the Generalised Extreme Value distribution (in days)
 #+BEGIN_SRC R
@@ -475,8 +452,6 @@ time steps for the Generalised Extreme Value distribution (in days)
   delta_T_Max <- last(events$UTC_d) - first(events$UTC_d)
 
 #+END_SRC
-
-#+RESULTS[dc5844e1c70cff3605a61cf572e2dd012f543978]:
 
 To improve the acuracy of the results, a bootstrapping approach is
 highly effective. The idea behind the bootstap approach is that
@@ -520,8 +495,6 @@ order is: T, loc, scale, shape, error_loc, error_scale, error_shape
 
 #+END_SRC
 
-#+RESULTS[19c7aaa71371b8140a3e1a6a92181e930a1527ac]:
-
 Present the results by performing a statistical summary of the
 parameter estimates
 #+BEGIN_SRC R
@@ -543,8 +516,6 @@ parameter estimates
   Location <- GEV_Results[,3]
 #+END_SRC
 
-#+RESULTS[506c1cc872509c3e488e33f253e6f325f37a4697]:
-
 Now we can calculate estimates of maximum magnitudes for arbitrary
 time in the future. Here we look at 1000, 2000, 3000, 4000 and 5000
 years ahead
@@ -561,10 +532,7 @@ years ahead
     }
 #+END_SRC
 
-#+RESULTS[1035e11f5b32ba5657ef0fc3a00ad62fdad1f767]:
-
-** Plot results
-
+** Generating plots
 Calculate the Gutenberg-Richter relationship between magnitude and
 number of events smaller or equal to the given magnitude
 #+BEGIN_SRC R
@@ -573,12 +541,7 @@ number of events smaller or equal to the given magnitude
       mutate(n = cumsum(n)) %>%
       mutate(n = max(n) - n + 1)
 
-  #GR <- count(events, Mag)
-  #GR <- mutate(GR, n = cumsum(n))
-  #GR <- mutate(GR, n = max(n) - n + 1)
 #+END_SRC
-
-#+RESULTS[b72396fbfa13050372cb7224aea688b9cc99975a]:
 
 Make the actual plots
 #+BEGIN_SRC R :file ../output/earthquakes_gev.pdf
@@ -626,7 +589,7 @@ Make the actual plots
           ylab="Location Parameter")
   grid(lty=2,col=5)
 
-  matplot(Time_Steps,Quantiles,ylim=c(6,9),
+  matplot(Time_Steps,Quantiles,ylim=c(5,8),
           type="l",
           lty=1,
           col=1,
@@ -637,9 +600,6 @@ Make the actual plots
 
   par(op)
 #+END_SRC
-
-#+RESULTS[88eb074649394b7da4f28848661c880faaa29200]:
-[[file:../output/earthquakes_gev.pdf]]
 
 \bibliography{biblio_seismology}
 \bibliographystyle{chicago}

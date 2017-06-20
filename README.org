@@ -1,7 +1,6 @@
-# wa-seismicity
-Statistics of earthquakes in WA
+#+TITLE: Statistics of earthquakes in NW Australia
 
-Investigating the statistics of earthquakes in WA, through the
+An investigation of the statistics of earthquakes in WA, through the
 application of extreme value theory.
 
 Data obtained from the public website of [[http://www.ga.gov.au/earthquakes][Geoscience Australia]].
