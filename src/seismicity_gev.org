@@ -1,6 +1,7 @@
 #+TITLE: Seismicity Statistics \\ using Extreme Value Theory
 #+OPTIONS: toc:nil ^:{}
-#+LATEX_HEADER: \usepackage{chicago,SIunits}
+#+LATEX_HEADER: \usepackage{chicago}
+#+LATEX_HEADER: \usepackage[squaren]{SIunits}
 
 * Introduction
 Probabilistic Seismic Hazard Analysis (PSHA) relies fundamentally on
@@ -124,7 +125,7 @@ to the definition of the GEV distribution
   \label{eq:GEV}
 \Phi(x|\mu,\sigma,\xi) = e^{- (1 + \xi (x - \mu)/ \sigma)^{-1/\xi)}},  
 \end{equation}
-a Pareto ($ξ>0$) or a Weibull ($ξ<0$) distribution which
+a Pareto ($\xi>0$) or a Weibull ($\xi<0$) distribution which
 degenerates for $\xi = 0$ to 
 \begin{equation}
   \label{eq:gumbel}
@@ -256,9 +257,6 @@ First, let us make a simple plot of the data
 
 #+END_SRC
 
-#+RESULTS[c9b582df1c2432202c50e929edd6fba7e1e282d4]:
-[[file:../output/time_mag.pdf]]
-
 The plot shows that the database is not uniform: far fewer events have
 been recorded in earlier years.
 
@@ -306,9 +304,6 @@ systematic difference between the subsets.
          pch = c(19,21,21),
          col = c("black","black","green"))
 #+END_SRC
-
-#+RESULTS[2d191836f542008234405e5cb2ce109fd2ee71a9]:
-[[file:../output/mag_issues.pdf]]
 
 We can  change the magnitude values of all pre-1992 events.
 #+BEGIN_SRC R
@@ -417,7 +412,7 @@ To avoid clashes with main shocks, we shall take out the main shocks
 from the events set, and then add them again after processing.
 
 #+BEGIN_SRC R
-  events <- anti_join(events, main_shocks, by = "EVENT.ID")
+  events <- filter(events, Mag <= Max_Mag)
 
   Index <- 1
     while (Index < length(events$UTC)-1)
@@ -434,13 +429,11 @@ from the events set, and then add them again after processing.
       Index <- Index + 1
       }
 
-  events <- full_join(events, main_shocks)
+  events <- rbind(events, main_shocks)
   events <- arrange(events, UTC)
-
   events <- filter(events, Aftershock == FALSE)
 
 #+END_SRC
-
 
 ** EVD calculations
 First, set the lower magnitude cut-off. We also have to define the
